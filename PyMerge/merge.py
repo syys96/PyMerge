@@ -10,8 +10,8 @@ global_include_visited = []
 
 
 def search_includes(file_path):
-    global global_include_visited
-    global_include_visited.append(file_path)
+    global global_include_visited, global_include_dir
+    # global_include_visited.append(file_path)
     sys_include_path = []
     self_include_path = []
     with open(file_path, 'r', encoding='utf-8') as f:
@@ -26,7 +26,6 @@ def search_includes(file_path):
                     sys_include_path.append(file_final)
                 elif name_inc[0] == '"':
                     file_final = name_inc.replace('"', '')
-                    global global_include_dir
                     curr_include_dir = deepcopy(global_include_dir)
                     curr_include_dir.append(curr_dir)
                     flag_find = False
@@ -37,6 +36,7 @@ def search_includes(file_path):
                             break
                         if Path(path_inc).is_file():
                             flag_find = True
+                            global_include_visited.append(path_inc)
                             (sysm,selfm) = search_includes(path_inc)
                             sys_include_path.extend(sysm)
                             self_include_path.extend(selfm)
@@ -52,7 +52,7 @@ def search_includes(file_path):
     return sys_include_path, self_include_path
 
 
-def merge(main_file_full_path, save_full_path=None):
+def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None):
     if not Path(main_file_full_path).is_file():
         print("main file not exist! Exit...")
         sys.exit()
@@ -63,6 +63,8 @@ def merge(main_file_full_path, save_full_path=None):
     global_include_visited.clear()
     global_include_dir.clear()
     global_include_dir.append(base_path)
+    for inc in inc_dir:
+        global_include_dir.append(os.path.abspath(inc))
     if save_full_path is None:
         save_full_path = base_path + '/' + base_name + '_merged.cpp'
     sys_inc, self_inc = search_includes(str(main_file))
@@ -70,17 +72,23 @@ def merge(main_file_full_path, save_full_path=None):
     for i in range(len(self_inc)):
         self_inc[i] = os.path.abspath(self_inc[i])
     self_inc = sorted(set(self_inc), key=self_inc.index)
-    assert self_inc[-1][-3:-1] == 'cp'
-    self_sour = [self_inc[-1]]
-    self_inc = self_inc[0:-1]
+    abs_main = os.path.abspath(main_file_full_path)
+    assert abs_main in self_inc
+    self_inc.remove(abs_main)
+    print(self_inc)
+    self_sour = [abs_main]
     for inc_file in self_inc:
         assert '.h' in inc_file
         sour_file = inc_file.replace('.h', '.cpp')
         if Path(sour_file).is_file():
             self_sour.append(sour_file)
-    self_sour.append(self_sour[0])
-    self_sour = self_sour[1:]
+        for pre_src_path in src_dir:
+            src_name = Path(os.path.abspath(pre_src_path) + '/'
+                                + str(PurePath(inc_file).name).replace('.h', '.cpp'))
+            if src_name.is_file():
+                self_sour.append(str(src_name))
     self_sour = sorted(set(self_sour), key=self_sour.index)
+    print(self_sour)
     for sour_wenjian in self_sour:
         with open(sour_wenjian, 'r', encoding='utf-8') as fwj:
             wenjian_dir = str(PurePath(sour_wenjian).parent)
@@ -104,27 +112,30 @@ def merge(main_file_full_path, save_full_path=None):
     self_inc = sorted(set(self_inc), key=self_inc.index)
     sys_inc = list(set(sys_inc))
     with open(save_full_path, 'w', encoding='utf-8') as f:
-        f.write("// system include headers\n")
+        f.write("// ######## begin of system include headers ########\n\n\n")
         for file_tmp in sys_inc:
             full_tmp = '#include <' + file_tmp + '>\n'
             f.write(full_tmp)
-        f.write("\n\n// header files\n\n")
+        f.write("\n\n// ######## end of system include headers ########\n\n\n")
+        f.write("// ######## begin of self header files\n\n\n")
         for file_tmp in self_inc:
             f.write("// begin " + file_tmp + '\n')
             with open(file_tmp, 'r', encoding='utf-8') as fp_tmp:
                 sour_line_tmp = fp_tmp.readlines()
                 for line_tmp in sour_line_tmp:
-                    if '#include' in line_tmp:
+                    if '#include' in line_tmp or line_tmp == '\n':
                         continue
                     f.write(line_tmp)
-            f.write("\n// end\n\n")
-        f.write("\n\n// source files\n\n")
+            f.write("\n// end of " + file_tmp + "\n")
+        f.write("\n\n// ######## end of self header files ######## \n\n\n")
+        f.write("// ######## begin of source files ######## \n\n\n")
         for file_tmp in self_sour:
-            f.write("// begin " + file_tmp + '\n')
+            f.write("// begin of " + file_tmp + '\n')
             with open(file_tmp, 'r', encoding='utf-8') as fp_tmp:
                 sour_line_tmp = fp_tmp.readlines()
                 for line_tmp in sour_line_tmp:
-                    if '#include' in line_tmp:
+                    if '#include' in line_tmp or line_tmp == '\n':
                         continue
                     f.write(line_tmp)
-            f.write("\n// end\n\n")
+            f.write("\n// end of " + file_tmp + "\n\n")
+        f.write("// ######## end of source files ######## \n\n\n")

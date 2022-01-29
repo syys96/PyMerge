@@ -3,3 +3,4 @@ upload_all.sh
 dist
 build
 PyMerge.egg-info
+test/cmake-build-debug
