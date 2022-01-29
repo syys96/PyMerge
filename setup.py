@@ -18,7 +18,7 @@ URL = 'https://github.com/syys96/PyMerge'
 EMAIL = 'syysdgf@gmail.com'
 AUTHOR = 'Ryouko'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.1.5'
+VERSION = '0.1.6'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
@@ -103,7 +103,8 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"]),
+    packages=find_packages(exclude=["tests", "*.tests", "*.tests.*", "tests.*"],
+                           include=["PyMerge"]),
     # If your package is a single module, use this instead of 'packages':
     # py_modules=['mypackage'],
 
