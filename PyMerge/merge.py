@@ -53,10 +53,13 @@ def search_includes(file_path):
     return sys_include_path, self_include_path
 
 
-def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None):
+def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
+          extra_hea_suf=[], extra_src_suf=[]):
     if not Path(main_file_full_path).is_file():
         print("main file not exist! Exit...")
         sys.exit()
+    extra_hea_suf.append('.h')
+    extra_src_suf.append('.cpp')
     main_file = PurePath(main_file_full_path)
     base_path = str(main_file.parent)
     base_name = str(main_file.name).replace('.cpp', '')
@@ -79,10 +82,9 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None):
     print(self_inc)
     self_sour = [abs_main]
     for inc_file in self_inc:
-        if '.h' not in inc_file:
-            print(inc_file)
-        assert '.h' in inc_file
-        sour_file = inc_file.replace('.h', '.cpp')
+        inc_suf = os.path.splitext(inc_file)[-1]
+        assert inc_suf in extra_hea_suf
+        sour_file = inc_file.replace(inc_suf, '.cpp')
         if Path(sour_file).is_file():
             self_sour.append(sour_file)
         for pre_src_path in src_dir:
