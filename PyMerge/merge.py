@@ -79,7 +79,8 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
     if save_full_path is None:
         save_full_path = base_path + '/' + base_name + '_merged.cpp'
     sys_inc, self_inc = search_includes(str(main_file))
-    sys_inc = list(set(sys_inc))
+    # sys_inc = list(set(sys_inc))
+    sys_inc = sorted(set(sys_inc), key=sys_inc.index)
     for i in range(len(self_inc)):
         self_inc[i] = os.path.abspath(self_inc[i])
     self_inc = sorted(set(self_inc), key=self_inc.index)
@@ -138,7 +139,8 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
                         sys.exit()
 
     self_inc = sorted(set(self_inc), key=self_inc.index)
-    sys_inc = list(set(sys_inc))
+    # sys_inc = list(set(sys_inc))
+    sys_inc = sorted(set(sys_inc), key=sys_inc.index)
     with open(save_full_path, 'w', encoding='utf-8') as f:
         f.write("// ######## begin of system include headers ########\n\n\n")
         for file_tmp in sys_inc:
