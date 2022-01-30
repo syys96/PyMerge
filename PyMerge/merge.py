@@ -84,14 +84,16 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
     for inc_file in self_inc:
         inc_suf = os.path.splitext(inc_file)[-1]
         assert inc_suf in extra_hea_suf
-        sour_file = inc_file.replace(inc_suf, '.cpp')
-        if Path(sour_file).is_file():
-            self_sour.append(sour_file)
-        for pre_src_path in src_dir:
-            src_name = Path(os.path.abspath(pre_src_path) + '/'
-                                + str(PurePath(inc_file).name).replace('.h', '.cpp'))
-            if src_name.is_file():
-                self_sour.append(str(src_name))
+        for src_suf in extra_src_suf:
+            sour_file = inc_file.replace(inc_suf, src_suf)
+            if Path(sour_file).is_file():
+                self_sour.append(sour_file)
+        for src_suf in extra_src_suf:
+            for pre_src_path in src_dir:
+                src_name = Path(os.path.abspath(pre_src_path) + '/'
+                                + str(PurePath(inc_file).name).replace(inc_suf, src_suf))
+                if src_name.is_file():
+                    self_sour.append(str(src_name))
     self_sour = sorted(set(self_sour), key=self_sour.index)
     print(self_sour)
     for sour_wenjian in self_sour:
