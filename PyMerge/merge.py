@@ -54,10 +54,13 @@ def search_includes(file_path):
 
 
 def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
-          extra_hea_suf=[], extra_src_suf=[]):
+          extra_hea_suf=[], extra_src_suf=[], pro_root_dir='', debug=False):
     if not Path(main_file_full_path).is_file():
         print("main file not exist! Exit...")
         sys.exit()
+    if pro_root_dir == '':
+        pro_root_dir = '.'
+    pro_root_dir = os.path.abspath(pro_root_dir)
     extra_hea_suf.append('.h')
     extra_src_suf.append('.cpp')
     main_file = PurePath(main_file_full_path)
@@ -66,9 +69,13 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
     global global_include_visited, global_include_dir
     global_include_visited.clear()
     global_include_dir.clear()
-    global_include_dir.append(base_path)
+    global_include_dir.append(os.path.abspath(base_path))
+    global_include_dir.append(pro_root_dir)
     for inc in inc_dir:
         global_include_dir.append(os.path.abspath(inc))
+    if debug:
+        for gd in global_include_dir:
+            print('gd: ', global_include_dir)
     if save_full_path is None:
         save_full_path = base_path + '/' + base_name + '_merged.cpp'
     sys_inc, self_inc = search_includes(str(main_file))
@@ -79,7 +86,9 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
     abs_main = os.path.abspath(main_file_full_path)
     assert abs_main in self_inc
     self_inc.remove(abs_main)
-    print(self_inc)
+    if debug:
+        for sc in self_inc:
+            print(sc)
     self_sour = [abs_main]
     for inc_file in self_inc:
         inc_suf = os.path.splitext(inc_file)[-1]
@@ -95,8 +104,12 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
                 if src_name.is_file():
                     self_sour.append(str(src_name))
     self_sour = sorted(set(self_sour), key=self_sour.index)
-    print(self_sour)
+    if debug:
+        for sr in self_sour:
+            print(sr)
     for sour_wenjian in self_sour:
+        if debug:
+            print(sour_wenjian)
         with open(sour_wenjian, 'r', encoding='utf-8') as fwj:
             wenjian_dir = str(PurePath(sour_wenjian).parent)
             wenjian_lines = fwj.readlines()
@@ -107,7 +120,15 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
                     if ret_line[0] == '"':
                         aaa_line = ret_line.replace('"', '')
                         bbb_path = os.path.abspath(wenjian_dir + '/' + aaa_line)
-                        self_inc.append(bbb_path)
+                        if Path(bbb_path).is_file():
+                            if debug:
+                                print('bbb: ', bbb_path)
+                            self_inc.append(bbb_path)
+                        bbb_path = os.path.abspath(pro_root_dir + '/' + aaa_line)
+                        if Path(bbb_path).is_file():
+                            if debug:
+                                print('bbb: ', bbb_path)
+                            self_inc.append(bbb_path)
                     elif ret_line[0] == '<':
                         aaa_line = ret_line.replace('<', '').replace('>', '')
                         bbb_path = aaa_line

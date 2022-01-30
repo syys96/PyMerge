@@ -18,7 +18,7 @@ URL = 'https://github.com/syys96/PyMerge'
 EMAIL = 'syysdgf@gmail.com'
 AUTHOR = 'Ryouko'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = '0.1.11'
+VERSION = '0.1.12'
 
 # What packages are required for this module to be executed?
 REQUIRED = [
