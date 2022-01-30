@@ -42,7 +42,8 @@ def search_includes(file_path):
                             self_include_path.extend(selfm)
                             break
                     if not flag_find:
-                        print("Error! include file not found in all include dirs! exit...")
+                        print("Error! include file not found in all include dirs: ", name_inc)
+                        print("exit...")
                         sys.exit()
                 else:
                     print("Error, not "" or <> include style not allowed! exit...")
