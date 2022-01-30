@@ -79,6 +79,8 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None):
     print(self_inc)
     self_sour = [abs_main]
     for inc_file in self_inc:
+        if '.h' not in inc_file:
+            print(inc_file)
         assert '.h' in inc_file
         sour_file = inc_file.replace('.h', '.cpp')
         if Path(sour_file).is_file():
