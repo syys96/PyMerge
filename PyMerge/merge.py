@@ -20,9 +20,10 @@ def search_includes(file_path, not_def_macro):
         look_for_endif = False
         for line in code_lines:
             line = line.replace('\n', '')
-            if look_for_endif and line == '#endif':
+            if look_for_endif:
+                if line == '#endif':
                     look_for_endif = False
-                    continue
+                continue
             if line.replace('#ifdef ', '') in not_def_macro:
                 look_for_endif = True
                 continue
