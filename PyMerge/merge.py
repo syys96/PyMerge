@@ -18,15 +18,33 @@ def search_includes(file_path, not_def_macro):
         code_lines = f.readlines()
         curr_dir = str(PurePath(file_path).parent)
         look_for_endif = False
+        look_for_elseif = False
         for line in code_lines:
             line = line.replace('\n', '')
             if look_for_endif:
                 if line == '#endif':
                     look_for_endif = False
                 continue
-            if line.replace('#ifdef ', '') in not_def_macro:
+            if look_for_elseif and '#else' == line:
                 look_for_endif = True
-                continue
+                look_for_elseif = False
+            if '#ifdef' in line:
+                def_found = False
+                for it in not_def_macro:
+                    if ('#ifdef ' + it) in line:
+                        def_found = True
+                        break
+                if def_found:
+                    look_for_endif = True
+                    continue
+            if '#ifndef' in line:
+                ndef_found = False
+                for it in not_def_macro:
+                    if ('#ifndef ' + it) in line:
+                        ndef_found = True
+                        break
+                if ndef_found:
+                    look_for_elseif = True
             if line[0:8] == '#include':
                 name_inc = line.replace('#include', '').split(' ')[1]
                 if name_inc[0] == "<":
