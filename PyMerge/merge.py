@@ -9,7 +9,7 @@ global_include_dir = []
 global_include_visited = []
 
 
-def search_includes(file_path):
+def search_includes(file_path, not_def_macro):
     global global_include_visited, global_include_dir
     # global_include_visited.append(file_path)
     sys_include_path = []
@@ -17,8 +17,15 @@ def search_includes(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         code_lines = f.readlines()
         curr_dir = str(PurePath(file_path).parent)
+        look_for_endif = False
         for line in code_lines:
             line = line.replace('\n', '')
+            if look_for_endif and line == '#endif':
+                    look_for_endif = False
+                    continue
+            if line.replace('#ifdef ', '') in not_def_macro:
+                look_for_endif = True
+                continue
             if line[0:8] == '#include':
                 name_inc = line.replace('#include', '').split(' ')[1]
                 if name_inc[0] == "<":
@@ -37,7 +44,7 @@ def search_includes(file_path):
                         if Path(path_inc).is_file():
                             flag_find = True
                             global_include_visited.append(path_inc)
-                            (sysm,selfm) = search_includes(path_inc)
+                            (sysm,selfm) = search_includes(path_inc, not_def_macro)
                             sys_include_path.extend(sysm)
                             self_include_path.extend(selfm)
                             break
@@ -54,7 +61,8 @@ def search_includes(file_path):
 
 
 def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
-          extra_hea_suf=[], extra_src_suf=[], pro_root_dir='', debug=False):
+          extra_hea_suf=[], extra_src_suf=[], pro_root_dir='', debug=False,
+          not_def_macro=[]):
     if not Path(main_file_full_path).is_file():
         print("main file not exist! Exit...")
         sys.exit()
@@ -78,7 +86,7 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
             print('gd: ', global_include_dir)
     if save_full_path is None:
         save_full_path = base_path + '/' + base_name + '_merged.cpp'
-    sys_inc, self_inc = search_includes(str(main_file))
+    sys_inc, self_inc = search_includes(str(main_file), not_def_macro)
     # sys_inc = list(set(sys_inc))
     sys_inc = sorted(set(sys_inc), key=sys_inc.index)
     for i in range(len(self_inc)):
@@ -154,6 +162,8 @@ def merge(main_file_full_path, inc_dir=[], src_dir=[], save_full_path=None,
                 sour_line_tmp = fp_tmp.readlines()
                 for line_tmp in sour_line_tmp:
                     if '#include' in line_tmp or line_tmp == '\n':
+                        continue
+                    if '#pragma once' in line_tmp:
                         continue
                     f.write(line_tmp)
             f.write("\n// end of " + file_tmp + "\n")
